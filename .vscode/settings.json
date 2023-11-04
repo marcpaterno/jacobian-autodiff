@@ -1,0 +1,26 @@
+{
+  "files.associations": {
+    "mutex": "cpp",
+    "__tree": "cpp",
+    "deque": "cpp",
+    "functional": "cpp",
+    "hash_map": "cpp",
+    "list": "cpp",
+    "map": "cpp",
+    "queue": "cpp",
+    "set": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "vector": "cpp",
+    "*.tcc": "cpp",
+    "chrono": "cpp",
+    "format": "cpp",
+    "ostream": "cpp"
+  },
+  "cmake.configureOnOpen": false,
+  "cmake.configureArgs": [
+    "-DBUILD_SHARED_LIBS=on",
+  ],
+  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}"
+}
