@@ -39,7 +39,7 @@ namespace jac {
       // of the information that no aliasing can be happening.
       dual_array<N> args(x);
       for (std::size_t i = 1; i <= N; ++i) {
-        Dual<N>& current_arg = args[i-1];
+        Dual<N>& current_arg = args[i - 1];
         current_arg.v[i] = 1.0;
       }
       return func(args);
@@ -51,20 +51,29 @@ namespace jac {
     std::function<f_return_type(f_arg_type)> func;
   };
 
+  // deduce_n is a compile-time function that calculates the value of N that is
+  // associated with the function of type F.
+  template <typename F>
+  struct deduce_n;
+
   // The free function template make_jacobian exists to make it easier to create
   // a Jacobian object. We should look at creating appropriate template
   // deduction guides to make this superfluous.
-  template <typename F, int N>
-  Jacobian<F, N> make_jacobian(F&& func);
+  template <typename F>
+  Jacobian<F, deduce_n<F>::value> make_jacobian(F&& func);
 
   //-------------------------------------------------------------------
   // Implementation below
 
-  template <typename F, int N>
-  jac::Jacobian<F, N>
+  template <typename F>
+  struct deduce_n {
+    static int const value = 2;
+  };
+
+  template <typename F>
+  jac::Jacobian<F, deduce_n<F>::value>
   make_jacobian(F&& func)
   {
-    return jac::Jacobian<F, N>(func);
+    return jac::Jacobian<F, deduce_n<F>::value>(func);
   }
-
 }

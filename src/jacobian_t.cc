@@ -22,30 +22,57 @@ f1(dual_array<1> const& args)
 
 TEST_CASE("function of one variable")
 {
-  dual_array<1> arg{Dual<1>(1.5)};
-  Dual<1> res = f1(arg);
+  dual_array<1> x{Dual<1>(1.5)};
+  Dual<1> res = f1(x);
   CHECK(res[0] == 5.25);
 
+  // Create the callable derivative object f1deriv:
   jac::Jacobian<decltype(f1), 1> f1deriv(f1);
-  Dual<1> gradient = f1deriv(arg);
+
+  // Now evaluate it at the location x.
+  Dual<1> gradient = f1deriv(x);
   CHECK(gradient[0] == 5.25);
   CHECK(gradient[1] == 5.0);
 }
 
-inline Dual<2>
-f2(dual_array<2> const& args)
+// f2 is a function template, rather than a function. The idea is that the user
+// can instantiate this function with:
+//   1)  T = double to yield a function that uses an array of two doubles as its
+//   argument type and which returns a double, or
+//   2) T = Dual<2> to yield a function that uses an array of two Dual<2> as its
+//   argument type and which returns a Dual<2>.
+//
+// f2 :: array<T, 2> -> T
+// f2(x, y) = 2 x - y^3
+// df2/dx = 2
+// df2/dy = - 3 y^2
+template <typename T>
+T
+f2(std::array<T, 2> x)
 {
-  auto const x = args[0];
-  auto const y = args[1];
-  return 2 * x - y*y*y;
+  return 2 * x[0] - x[1] * x[1] * x[1];
 }
 
 TEST_CASE("function of two variables")
 {
-  dual_array<2> arg{Dual<2>(2.0), Dual<2>(3.0)};
-  jac::Jacobian<decltype(f2), 2> f2deriv(f2);
-  Dual<2> gradient = f2deriv(arg);
+  using D2 = Dual<2>; // type alias to simplify the following.
+
+  // Create the callable derivative object, f2deriv. Note that we need to
+  // specify that we want to instantiate the function template f2 with type D2 =
+  // Dual<2>.
+  jac::Jacobian<decltype(f2<D2>), 2> f2deriv(f2<D2>);
+
+  // Now evaluate the function and its derivates at the point x.
+  dual_array<2> x{D2(2.0), D2(3.0)};
+  D2 gradient = f2deriv(x);
   CHECK(gradient[0] == -23.0);
   CHECK(gradient[1] == 2.0);
   CHECK(gradient[2] == -27.0);
+}
+
+TEST_CASE("deduction of template parameters")
+{
+  // This is the way I would *like* make_jacobian to work.
+  // The current solution is a cheat that only works for N==2.
+  auto fderiv = make_jacobian(f2<Dual<2>>);
 }
