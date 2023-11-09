@@ -72,7 +72,23 @@ TEST_CASE("function of two variables")
 
 TEST_CASE("deduction of template parameters")
 {
-  // This is the way I would *like* make_jacobian to work.
-  // The current solution is a cheat that only works for N==2.
-  auto fderiv = make_jacobian(f2<Dual<2>>);
+  // Test of deduction using our function template that models a function of two
+  // arguments; note that we must explicitly instantiate the template by
+  // supplying the template parameter as Dual<2>.
+  using D2 = Dual<2>; // type alias to simplify the following.
+  auto fderiv = make_jacobian(f2<D2>);
+
+  dual_array<2> x{D2(2.0), D2(3.0)};
+  auto gradient = fderiv(x);
+  CHECK(gradient[0] == -23.0);
+  CHECK(gradient[1] == 2.0);
+  CHECK(gradient[2] == -27.0);
+
+  // Test of the deduction with a function that is *not* a template
+  // instantiation.
+  auto f1_deriv = make_jacobian(f1);
+  dual_array<1> x2({Dual<1>(1.0)});
+  auto deriv = f1_deriv(x2);
+  CHECK(deriv[0] == 3.0);
+  CHECK(deriv[1] == 4.0);
 }

@@ -65,9 +65,31 @@ namespace jac {
   //-------------------------------------------------------------------
   // Implementation below
 
+  // ArgType is a compile-time function to deduce the argument type of the
+  // callable type F. The answer is returned as a nested type, 'type'. Note that
+  // ArgType can not be used on an overload set, but only on a single function.
+  // That function can be the result of the instantiation of a template.
+
+  // General case, which is an incomplete type.
+  template <class F>
+  struct ArgType;
+
+  // Specialization for a refernce to a callable that takes an argument of type
+  // T and returns a value of type R.
+  template <class R, class T>
+  struct ArgType<R (&)(T)> {
+    typedef std::remove_cv_t<std::remove_reference_t<T>> type;
+  };
+
   template <typename F>
   struct deduce_n {
-    static int const value = 2;
+    // Given a callable F, which takes an argument type of:
+    //   dual_array<N> const&
+    // we want to deduce the value of N.
+
+    using arg_t = typename ArgType<F>::type;
+    using value_type = typename arg_t::value_type;
+    static int const value = sizeof(arg_t) / sizeof(value_type);
   };
 
   template <typename F>
