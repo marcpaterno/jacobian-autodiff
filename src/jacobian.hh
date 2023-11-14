@@ -29,7 +29,8 @@ namespace jac {
     explicit Jacobian(F&& f) : func(std::forward<F&&>(f)) {}
 
     // Evaluate the jacobian of f at point x.
-    Dual<N>
+    // Dual<N>
+    auto
     operator()(dual_array<N> const& x) const
     {
       // We make a local copy so that we can modify our copy without altering
@@ -44,10 +45,12 @@ namespace jac {
       }
       return func(args);
     }
-
-  private:
     using f_return_type = Dual<N>;
     using f_arg_type = dual_array<N>;
+
+  private:
+    // It seems icky to have to hold the callable object in the type-erased
+    // container. Is there another solution?
     std::function<f_return_type(f_arg_type)> func;
   };
 
@@ -65,20 +68,21 @@ namespace jac {
   //-------------------------------------------------------------------
   // Implementation below
 
-  // ArgType is a compile-time function to deduce the argument type of the
+  // arg_type is a compile-time function to deduce the argument type of the
   // callable type F. The answer is returned as a nested type, 'type'. Note that
-  // ArgType can not be used on an overload set, but only on a single function.
+  // arg_type can not be used on an overload set, but only on a single function.
   // That function can be the result of the instantiation of a template.
 
   // General case, which is an incomplete type.
   template <class F>
-  struct ArgType;
+  struct arg_type;
 
   // Specialization for a refernce to a callable that takes an argument of type
   // T and returns a value of type R.
   template <class R, class T>
-  struct ArgType<R (&)(T)> {
-    typedef std::remove_cv_t<std::remove_reference_t<T>> type;
+  struct arg_type<R (&)(T)> {
+    // using type = std::remove_cv_t<std::remove_reference_t<T>>;
+    using type = T;
   };
 
   template <typename F>
@@ -87,9 +91,10 @@ namespace jac {
     //   dual_array<N> const&
     // we want to deduce the value of N.
 
-    using arg_t = typename ArgType<F>::type;
-    using value_type = typename arg_t::value_type;
-    static int const value = sizeof(arg_t) / sizeof(value_type);
+    using stripped_arg_t =
+      std::remove_cv_t<std::remove_reference_t<typename arg_type<F>::type>>;
+    using value_type = typename stripped_arg_t::value_type;
+    static int const value = sizeof(stripped_arg_t) / sizeof(value_type);
   };
 
   template <typename F>
