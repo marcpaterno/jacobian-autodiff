@@ -1,9 +1,11 @@
 #pragma once
 
+#include "callable_traits.hh"
 #include "dual.hh"
 #include <array>
 #include <concepts>
 #include <functional>
+#include <utility>
 
 namespace jac {
 
@@ -29,8 +31,7 @@ namespace jac {
     explicit Jacobian(F&& f) : func(std::forward<F&&>(f)) {}
 
     // Evaluate the jacobian of f at point x.
-    // Dual<N>
-    auto
+    Dual<N>
     operator()(dual_array<N> const& x) const
     {
       // We make a local copy so that we can modify our copy without altering
@@ -40,7 +41,7 @@ namespace jac {
       // of the information that no aliasing can be happening.
       dual_array<N> args(x);
       for (std::size_t i = 1; i <= N; ++i) {
-        Dual<N>& current_arg = args[i - 1];
+        auto& current_arg = args[i - 1];
         current_arg.v[i] = 1.0;
       }
       return func(args);
@@ -75,15 +76,27 @@ namespace jac {
 
   // General case, which is an incomplete type.
   template <class F>
-  struct arg_type;
-
-  // Specialization for a refernce to a callable that takes an argument of type
-  // T and returns a value of type R.
-  template <class R, class T>
-  struct arg_type<R (&)(T)> {
-    // using type = std::remove_cv_t<std::remove_reference_t<T>>;
-    using type = T;
+  struct arg_type {
+    using type = callable_traits<F>::template arg_t<0>;
+    using stripped_type = std::remove_cv_t<std::remove_reference_t<type>>;
+    using value_type = typename stripped_type::value_type;
   };
+
+  // // Specialization for a function that takes an argument of type T and
+  // returns
+  // // a value of type R.
+  // template <class R, class T>
+  // struct arg_type<R(T)> {
+  //   using type = T;
+  // };
+
+  // // Specialization for a *  reference* to a function that takes an argument
+  // of
+  // // type T and returns a value of type R.
+  // template <class R, class T>
+  // struct arg_type<R (&)(T)> {
+  //   using type = T;
+  // };
 
   template <typename F>
   struct deduce_n {
@@ -93,7 +106,7 @@ namespace jac {
 
     using stripped_arg_t =
       std::remove_cv_t<std::remove_reference_t<typename arg_type<F>::type>>;
-    using value_type = typename stripped_arg_t::value_type;
+    using value_type = typename arg_type<F>::value_type;
     static int const value = sizeof(stripped_arg_t) / sizeof(value_type);
   };
 
@@ -101,6 +114,7 @@ namespace jac {
   jac::Jacobian<F, deduce_n<F>::value>
   make_jacobian(F&& func)
   {
-    return jac::Jacobian<F, deduce_n<F>::value>(func);
+    return jac::Jacobian<F, deduce_n<F>::value>(std::forward<F>(func));
   }
+
 }

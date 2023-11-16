@@ -1,9 +1,8 @@
 # Automatic Calculation of Jacobians and Hessians
 
 This repository contains a C++ demonstration of the calculation of
-Jacobians and (coming soon!) Hessians through automatic differentiation.
-The automatic differentiation is achieved through the use of dual
-numbers.
+Jacobians and Hessians through automatic differentiation. The automatic
+differentiation is achieved through the use of dual numbers.
 
 ## Differentiation through the use of dual numbers
 
@@ -23,6 +22,22 @@ $$
 If in this equation we use $b=1$, we get from a single evaluation of $f$
 (which must be implemented using dual numbers) that the evaluation of
 $f(a,1)$ tells us both $f(a)$ and $f'(a)$.
+
+## Nature of the `make_J` function
+
+We will use the term *callable object* rather than *function* in this
+description, except when refering to an actual C++ function. A callable
+object may be an actual C++ functions, possibly one created by
+instantiating a function template. A callable object may also be an
+instance of a class or struct that has a function call operator
+(`operator()(T...)`) implemented for some type, or sequence of types,
+`T`.
+
+We want to work with callable types `F` such that if `f` is an object of
+type `F`, it supports a call like:
+
+    template <typename T, int M, int N>
+    array<T, M> f(array<T,N> const& x);
 
 ## Nature of the `jacobian` function
 
