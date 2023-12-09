@@ -22,5 +22,7 @@
   "cmake.configureArgs": [
     "-DBUILD_SHARED_LIBS=on",
   ],
-  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}"
+  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+  "editor.formatOnSave": true,
+  "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }
