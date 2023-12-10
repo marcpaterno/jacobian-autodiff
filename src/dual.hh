@@ -35,6 +35,7 @@ namespace jac {
   Dual<T, N> operator*(Dual<T, N> const& op1, Dual<T, N> const& op2);
 
   // Equality testing
+
   template <typename T, int N>
   bool operator==(Dual<T, N> const& a, Dual<T, N> const& b);
 
@@ -42,70 +43,105 @@ namespace jac {
   template <typename T, int N>
   std::ostream& operator<<(std::ostream& os, Dual<T, N> const& d);
 
-  //--------------------------------------------------------------------------------------------
-  // Implementations below.
-
   template <typename T, int N>
   struct Dual {
     // for computing the value, Jacobian and an n-variate function
     // f(x1,x2,..xN)
 
+    // Member types.
     using inner_type = T;
-    int constexpr size() const { return N + 1; }
+
+    // Static members.
+
+    // values to be used as 'zero' and 'one' with the class.
+    // a 'zero' has 'zeros' for *all* members.
+    // a 'one' has a 'one' for the first member, and 'zeros' for all others.
     static constexpr inner_type inner_type_zero = {0.0};
     static constexpr inner_type inner_type_one = {1.0};
 
-    static Dual<T, N>
-    for_deriv(inner_type const& x, int idx)
-    {
-      Dual<T, N> result{x};
-      result[idx] = inner_type_one;
-      return result;
-    }
+    // Factor function to create a Dual that is appropriate for the idx'th
+    // argument of a multi-argument function, when Duals are being used to
+    // calculate derivatives.
+    static Dual<T, N> for_deriv(inner_type const& x, int idx);
 
-    // Data member.
-    // Note that all entries of the array are initialized to zero by default, by
-    // this declaration of the data member.
-    std::array<T, N + 1> v{0.0};
+    // Member functions.
+    int constexpr size() const;
 
     // v[0] is value of the function f(x1,,x2,..xN)
     // v[1..N] are first order derivatives wrt x1,x2,..xN
     //         i.e. df/dx1, df/dx2..df/dxN
 
-    inner_type
-    operator[](int i) const
-    {
-      assert(i < N + 1);
-      return v[i];
-    }
+    // Access to entries in the Dual.
+    inner_type operator[](int i) const;
+    inner_type& operator[](int i);
 
-    inner_type&
-    operator[](int i)
-    {
-      assert(i < N + 1);
-      return v[i];
-    }
+    //  Arithmetic assignment operators.
+    Dual<T, N>& operator+=(Dual<T, N> const& x);
+    Dual<T, N>& operator-=(Dual<T, N> const& x);
 
-    Dual<T, N>&
-    operator+=(Dual<T, N> const& x)
-    {
-      for (int i = 0; i != size(); ++i) {
-        v[i] += x[i];
-      }
-      return *this;
-    }
-
-    Dual<T, N>&
-    operator-=(Dual<T, N> const& x)
-    {
-      for (int i = 0; i != size(); ++i) {
-        v[i] -= x[i];
-      }
-      return *this;
-    }
+    // Data member.
+    // Note that all entries of the array are initialized to zero by default, by
+    // this declaration of the data member.
+    std::array<T, N + 1> v{0.0};
   };
 
-  // Implementation of arithemetic operations.
+  //---------------------------------------------------------------------------
+  // Implementation.
+
+  template <typename T, int N>
+  Dual<T, N>
+  Dual<T, N>::for_deriv(inner_type const& x, int idx)
+  {
+    assert(idx != 0);
+    assert(idx <= N);
+    Dual<T, N> result{x};
+    result[idx] = inner_type_one;
+    return result;
+  }
+
+  template <typename T, int N>
+  int constexpr Dual<T, N>::size() const
+  {
+    return N + 1;
+  }
+
+  template <typename T, int N>
+  Dual<T, N>::inner_type
+  Dual<T, N>::operator[](int i) const
+  {
+    assert(i < N + 1);
+    return v[i];
+  }
+
+  template <typename T, int N>
+  Dual<T, N>::inner_type&
+  Dual<T, N>::operator[](int i)
+  {
+    assert(i < N + 1);
+    return v[i];
+  }
+
+  template <typename T, int N>
+  Dual<T, N>&
+  Dual<T, N>::operator+=(Dual<T, N> const& x)
+  {
+    for (int i = 0; i != size(); ++i) {
+      v[i] += x[i];
+    }
+    return *this;
+  }
+
+  template <typename T, int N>
+  Dual<T, N>&
+  Dual<T, N>::operator-=(Dual<T, N> const& x)
+  {
+    for (int i = 0; i != size(); ++i) {
+      v[i] -= x[i];
+    }
+    return *this;
+  }
+
+  // Free function template implementations.
   template <typename T, int N>
   Dual<T, N>
   operator+(Dual<T, N> const& x, Dual<T, N> const& y)
