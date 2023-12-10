@@ -47,7 +47,7 @@ TEMPLATE_TEST_CASE("default constructed duals are zeros",
   dual_type x;
   static_assert(x.size() == 3);
 
-  for (int i = 0; i != x.size(); ++i) {
+  for (std::size_t i = 0; i != x.size(); ++i) {
     REQUIRE(x[i] == dual_type::inner_type_zero);
   }
 }
@@ -60,8 +60,6 @@ TEMPLATE_TEST_CASE("create dual number from nonzero value of scalar type",
                    std::complex<double>)
 {
   using dual_type = jac::Dual<TestType, 2>;
-  using inner_type = typename dual_type::inner_type;
-
   dual_type x{2.5};
   // The cast below is needed specifically to support the testing of
   // std::complex<float>.
@@ -237,5 +235,32 @@ TEST_CASE("division", "[base]")
 
 // TODO: add testing for division of nested duals.
 
-// TODO: add factory function taking std::initializer_list<inner_type>.
-// Then see if this can also be done with a constructor.
+TEST_CASE("aggregate initialization", "[base]")
+{
+  jac::Dual<double, 3> x{1., 2., 3., 4.};
+  auto y = jac::Dual<double, 3>::from_init({1., 2., 3., 4.});
+  REQUIRE(x == y);
+
+  std::initializer_list<double> vals{2., 4., 6., 8.};
+  auto z = jac::Dual<double, 3>::from_init(vals);
+  auto t = x + x;
+  REQUIRE(t == z);
+}
+
+TEST_CASE("aggregate initialization", "[template]")
+{
+  auto x = jac::Dual<jac::Dual<double, 2>, 3>::from_init(
+    {{1., 2., 3.}, {3., 4., 5.}, {5., 6., 7.}, {7., 8., 9.}});
+  REQUIRE(x.size() == 4);
+  for (std::size_t i = 0; i != 4; ++i) {
+    REQUIRE(x[i].size() == 3);
+  }
+  REQUIRE(x[0] == jac::Dual<double, 2>::from_init({1., 2., 3.}));
+
+  // TODO: Try to get the following to work for initializing a
+  // nested Dual.
+  //
+  // jac::Dual<jac::Dual<double, 2>, 3> a{
+  //   {1., 2., 3.}, {3., 4., 5.}, {5., 6., 7.}, {7., 8., 9.}};
+  // REQUIRE(a == x);
+}
