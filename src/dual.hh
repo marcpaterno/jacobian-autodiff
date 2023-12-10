@@ -63,7 +63,9 @@ namespace jac {
       return result;
     }
 
-    // Data member
+    // Data member.
+    // Note that all entries of the array are initialized to zero by default, by
+    // this declaration of the data member.
     std::array<T, N + 1> v{0.0};
 
     // v[0] is value of the function f(x1,,x2,..xN)
@@ -73,6 +75,7 @@ namespace jac {
     inner_type
     operator[](int i) const
     {
+      assert(i < N + 1);
       return v[i];
     }
 
@@ -82,32 +85,46 @@ namespace jac {
       assert(i < N + 1);
       return v[i];
     }
+
+    Dual<T, N>&
+    operator+=(Dual<T, N> const& x)
+    {
+      for (int i = 0; i != size(); ++i) {
+        v[i] += x[i];
+      }
+      return *this;
+    }
+
+    Dual<T, N>&
+    operator-=(Dual<T, N> const& x)
+    {
+      for (int i = 0; i != size(); ++i) {
+        v[i] -= x[i];
+      }
+      return *this;
+    }
   };
 
-// Implementation of arithemetic operations.
-#if 0
-  template <typename T>
-  Dual<T>
-  operator+(Dual<T> const& op1, Dual<T> const& op2)
+  // Implementation of arithemetic operations.
+  template <typename T, int N>
+  Dual<T, N>
+  operator+(Dual<T, N> const& x, Dual<T, N> const& y)
   {
-    Dual<T> result;
-    for (int i = 0; i <= Dual<T>::N; i++) {
-      result.v[i] = op1.v[i] + op2.v[i];
-    }
+    Dual<T, N> result(x);
+    result += y;
     return result;
   }
 
-  template <typename T>
-  Dual<T>
-  operator-(Dual<T> const& op1, Dual<T> const& op2)
+  template <typename T, int N>
+  Dual<T, N>
+  operator-(Dual<T, N> const& x, Dual<T, N> const& y)
   {
-    Dual<T> result;
-    for (int i = 0; i <= Dual<T>::N; i++) {
-      result.v[i] = op1.v[i] - op2.v[i];
-    }
-    return (result);
+    Dual<T, N> result(x);
+    result -= y;
+    return result;
   }
 
+#if 0
   template <typename T>
   Dual<T>
   operator*(Dual<T> const& op1, Dual<T> const& op2)

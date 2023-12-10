@@ -1,6 +1,7 @@
 #include "dual.hh"
 
 #include <complex>
+#include <iostream>
 #include <type_traits>
 
 #include "catch2/catch_template_test_macros.hpp"
@@ -139,4 +140,66 @@ TEST_CASE("indexing into nested Dual", "[template]")
   auto c = b[0];
   static_assert(std::is_same_v<decltype(c), double>);
   REQUIRE(c == 2.5);
+}
+
+TEST_CASE("inplace addition", "[base]")
+{
+  jac::Dual<double, 2> x = {1.0, 2.0, 3.0};
+  jac::Dual<double, 2> y = {1.5, 2.5, 3.5};
+  x += y;
+  jac::Dual<double, 2> expected = {2.5, 4.5, 6.5};
+  REQUIRE(x == expected);
+}
+
+TEST_CASE("addition", "[base]")
+{
+  jac::Dual<double, 2> x = {1.0, 2.0, 3.0};
+  jac::Dual<double, 2> y = {1.5, 2.5, 3.5};
+  auto z = x + y;
+  jac::Dual<double, 2> expected = {2.5, 4.5, 6.5};
+  REQUIRE(z == expected);
+}
+
+TEST_CASE("addition", "[template]")
+{
+  jac::Dual<jac::Dual<double, 2>, 2> x;
+  x[0] = {1., 2., 3.};
+  x[1] = {4., 5., 6.};
+  x[2] = {7., 8., 9.};
+  auto y(x); // copy x
+  REQUIRE(x == y);
+  auto z = x + y;
+  REQUIRE(z[0] == jac::Dual<double, 2>{2., 4., 6.});
+  REQUIRE(z[1] == jac::Dual<double, 2>{8., 10., 12.});
+  REQUIRE(z[2] == jac::Dual<double, 2>{14., 16., 18.});
+}
+
+TEST_CASE("inplace subtraction", "[base]")
+{
+  jac::Dual<double, 2> x = {1.0, 2.0, 3.0};
+  jac::Dual<double, 2> y = {1.5, 2.5, 3.5};
+  x -= y;
+  jac::Dual<double, 2> expected = {-0.5, -0.5, -0.5};
+  REQUIRE(x == expected);
+}
+
+TEST_CASE("subtraction", "[base]")
+{
+  jac::Dual<double, 2> x = {1.0, 2.0, 3.0};
+  jac::Dual<double, 2> y = {1.5, 2.5, 3.5};
+  auto z = x - y;
+  jac::Dual<double, 2> expected = {-0.5, -0.5, -0.5};
+  REQUIRE(z == expected);
+}
+
+TEST_CASE("subtraction", "[template]")
+{
+  jac::Dual<jac::Dual<double, 2>, 2> x;
+  x[0] = {1., 2., 3.};
+  x[1] = {4., 5., 6.};
+  x[2] = {7., 8., 9.};
+  auto y(x); // copy x
+  REQUIRE(x == y);
+  auto z = x - y;
+  REQUIRE(z == jac::Dual<jac::Dual<double, 2>, 2>{});
 }
