@@ -24,15 +24,19 @@ namespace jac {
 
   // Addition of Duals
   template <typename T, int N>
-  Dual<T, N> operator+(Dual<T, N> const& op1, Dual<T, N> const& op2);
+  Dual<T, N> operator+(Dual<T, N> const& x, Dual<T, N> const& y);
 
   // Subtraction of Duals
   template <typename T, int N>
-  Dual<T, N> operator-(Dual<T, N> const& op1, Dual<T, N> const& op2);
+  Dual<T, N> operator-(Dual<T, N> const& x, Dual<T, N> const& y);
 
   // Multiplication of Duals
   template <typename T, int N>
-  Dual<T, N> operator*(Dual<T, N> const& op1, Dual<T, N> const& op2);
+  Dual<T, N> operator*(Dual<T, N> const& x, Dual<T, N> const& y);
+
+  // Division of Duals
+  template <typename T, int N>
+  Dual<T, N> operator/(Dual<T, N> const& x, Dual<T, N> const& y);
 
   // Equality testing
 
@@ -59,7 +63,7 @@ namespace jac {
     static constexpr inner_type inner_type_zero = {0.0};
     static constexpr inner_type inner_type_one = {1.0};
 
-    // Factor function to create a Dual that is appropriate for the idx'th
+    // Factory function to create a Dual that is appropriate for the idx'th
     // argument of a multi-argument function, when Duals are being used to
     // calculate derivatives.
     static Dual<T, N> for_deriv(inner_type const& x, int idx);
@@ -160,22 +164,35 @@ namespace jac {
     return result;
   }
 
-#if 0
-  template <typename T>
-  Dual<T>
-  operator*(Dual<T> const& op1, Dual<T> const& op2)
+  template <typename T, int N>
+  Dual<T, N>
+  operator*(Dual<T, N> const& x, Dual<T, N> const& y)
   {
-    Dual<T> result;
-
-    result.v[0] = op1.v[0] * op2.v[0];
+    Dual<T, N> result;
+    result[0] = x[0] * y[0];
     // compute the first derivatives - duv/dxi = udv/dxi +  vdu/dxi
-    for (int i = 1; i <= Dual<T>::N; i++) {
-      result.v[i] = op1.v[0] * op2.v[i] + op2.v[0] * op1.v[i];
+    for (int i = 1; i != x.size(); ++i) {
+      result[i] = x[0] * y[i] + y[0] * x[i];
+    }
+    return result;
+  }
+
+  template <typename T, int N>
+  Dual<T, N>
+  operator/(Dual<T, N> const& x, Dual<T, N> const& y)
+  {
+    T temp = 1.0 / y[0];          // 1/v
+    T temp2 = x[0] * temp * temp; // u/sqr(v)
+    Dual<T, N> result;
+
+    result.v[0] = x[0] * temp; // u/v
+    // compute first derivates d(u/v)/dxi = 1/v*du/dxi - u/sqr(v)*dv/dxi;
+    for (int i = 1; i <= N; i++) {
+      result.v[i] = temp * x[i] - temp2 * y[i];
     }
 
     return result;
   }
-#endif
 
   template <typename T, int N>
   bool

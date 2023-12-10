@@ -203,3 +203,39 @@ TEST_CASE("subtraction", "[template]")
   auto z = x - y;
   REQUIRE(z == jac::Dual<jac::Dual<double, 2>, 2>{});
 }
+
+TEST_CASE("multiplication", "[base]")
+{
+  auto f = [](jac::Dual<double, 2> const& x, jac::Dual<double, 2> const& y) {
+    return x * y;
+  };
+  auto x = jac::Dual<double, 2>::for_deriv(4.0, 1);
+  auto y = jac::Dual<double, 2>::for_deriv(2.0, 2);
+  jac::Dual<double, 2> z = f(x, y);
+  REQUIRE(z[0] == 8.0);
+  REQUIRE(z[1] == 2.0);
+  REQUIRE(z[2] == 4.0);
+
+  auto u = x * y;
+  REQUIRE(z == u);
+}
+
+// TODO: Add testing for multiplication of nested Duals.
+
+TEST_CASE("division", "[base]")
+{
+  auto f = [](jac::Dual<double, 2> const& x, jac::Dual<double, 2> const& y) {
+    return x / y;
+  };
+  auto x = jac::Dual<double, 2>::for_deriv(4.0, 1);
+  auto y = jac::Dual<double, 2>::for_deriv(2.0, 2);
+  jac::Dual<double, 2> z = f(x, y);
+  REQUIRE(z[0] == 2.0);
+  REQUIRE(z[1] == 0.5);
+  REQUIRE(z[2] == -1.0);
+}
+
+// TODO: add testing for division of nested duals.
+
+// TODO: add factory function taking std::initializer_list<inner_type>.
+// Then see if this can also be done with a constructor.
