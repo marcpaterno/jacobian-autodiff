@@ -2,6 +2,8 @@ add_executable(dual_t dual_t.cc)
 target_link_libraries(dual_t PRIVATE Catch2::Catch2WithMain)
 add_test(dual_t dual_t)
 
+add_executable(function_template_demo function_template_demo.cc)
+
 message("CMAKE_CXX_COMPILER_ID is: ${CMAKE_CXX_COMPILER_ID}")
 
 foreach(exe_name IN ITEMS "dual_t")
