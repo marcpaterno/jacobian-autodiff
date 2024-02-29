@@ -264,3 +264,35 @@ TEST_CASE("aggregate initialization", "[template]")
   //   {1., 2., 3.}, {3., 4., 5.}, {5., 6., 7.}, {7., 8., 9.}};
   // REQUIRE(a == x);
 }
+
+template <typename T>
+T
+f(T x, T y)
+{
+  return x * x + y * y;
+}
+
+TEST_CASE("testing x*x + y*y") {
+  using d1 = jac::Dual<double, 2>;
+
+  d1 x{2.0, 1.0, 0.0};
+  d1 y{3.0, 0.0, 1.0};
+
+  auto res = f(x, y);
+  REQUIRE(res[0] == 13.0);
+  REQUIRE(res[1] == 4.0);
+  REQUIRE(res[2] == 6.0);
+}
+
+TEST_CASE("second deriv") {
+  using d1 = jac::Dual<double, 2>;
+  using d2 = jac::Dual<d1, 2>;
+
+  d2 x{d1{2.0, 1.0, 0.0},d1{1.0, 0.0, 0.0}, d1{0.0, 0.0, 0.0}};
+  d2 y{d1{3.0, 0.0, 1.0},d1{0.0, 0.0, 0.0}, d1{1.0, 0.0, 0.0}};
+  auto res = f(x, y);
+  REQUIRE(res[0] == d1{13.0, 4.0, 6.0});
+  REQUIRE(res[1] == d1{4.0, 2.0, 0.0});
+  REQUIRE(res[2] == d1{6.0, 0.0, 2.0});
+}
+
