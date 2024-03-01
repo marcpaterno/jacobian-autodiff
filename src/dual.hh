@@ -62,8 +62,8 @@ namespace jac {
     // values to be used as 'zero' and 'one' with the class.
     // a 'zero' has 'zeros' for *all* members.
     // a 'one' has a 'one' for the first member, and 'zeros' for all others.
-    static constexpr inner_type inner_type_zero = {0.0};
-    static constexpr inner_type inner_type_one = {1.0};
+    static constexpr inner_type inner_zero = {0.0};
+    static constexpr inner_type inner_one = {1.0};
 
     // Factory function to create a Dual that is appropriate for the idx'th
     // argument of a multi-argument function, when Duals are being used to
@@ -110,7 +110,7 @@ namespace jac {
     assert(idx != 0);
     assert(idx <= N);
     Dual<T, N> result{x};
-    result[idx] = inner_type_one;
+    result[idx] = inner_one;
     return result;
   }
 

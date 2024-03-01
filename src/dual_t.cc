@@ -48,7 +48,7 @@ TEMPLATE_TEST_CASE("default constructed duals are zeros",
   static_assert(x.size() == 3);
 
   for (std::size_t i = 0; i != x.size(); ++i) {
-    REQUIRE(x[i] == dual_type::inner_type_zero);
+    REQUIRE(x[i] == dual_type::inner_zero);
   }
 }
 
@@ -102,29 +102,29 @@ TEMPLATE_TEST_CASE("create dual number using for_deriv factor function",
                    (jac::Dual<std::complex<float>, 2>),
                    (jac::Dual<jac::Dual<double, 3>, 4>))
 {
-  using inner_t = TestType;
-  inner_t a = {1.5};
-  inner_t b = {2.5};
-  inner_t c = {3.5};
-  using OuterType = jac::Dual<inner_t, 3>;
+  using inner_type_t = TestType;
+  inner_type_t a = {1.5};
+  inner_type_t b = {2.5};
+  inner_type_t c = {3.5};
+  using OuterType = jac::Dual<inner_type_t, 3>;
   auto x = OuterType::for_deriv(a, 1);
   auto y = OuterType::for_deriv(b, 2);
   auto z = OuterType::for_deriv(c, 3);
 
   REQUIRE(x[0] == a);
-  REQUIRE(x[1] == OuterType::inner_type_one);
-  REQUIRE(x[2] == OuterType::inner_type_zero);
-  REQUIRE(x[3] == OuterType::inner_type_zero);
+  REQUIRE(x[1] == OuterType::inner_one);
+  REQUIRE(x[2] == OuterType::inner_zero);
+  REQUIRE(x[3] == OuterType::inner_zero);
 
   REQUIRE(y[0] == b);
-  REQUIRE(y[1] == OuterType::inner_type_zero);
-  REQUIRE(y[2] == OuterType::inner_type_one);
-  REQUIRE(y[3] == OuterType::inner_type_zero);
+  REQUIRE(y[1] == OuterType::inner_zero);
+  REQUIRE(y[2] == OuterType::inner_one);
+  REQUIRE(y[3] == OuterType::inner_zero);
 
   REQUIRE(z[0] == c);
-  REQUIRE(z[1] == OuterType::inner_type_zero);
-  REQUIRE(z[2] == OuterType::inner_type_zero);
-  REQUIRE(z[3] == OuterType::inner_type_one);
+  REQUIRE(z[1] == OuterType::inner_zero);
+  REQUIRE(z[2] == OuterType::inner_zero);
+  REQUIRE(z[3] == OuterType::inner_one);
 }
 
 TEST_CASE("indexing into nested Dual", "[template]")
@@ -294,5 +294,34 @@ TEST_CASE("second deriv") {
   REQUIRE(res[0] == d1{13.0, 4.0, 6.0});
   REQUIRE(res[1] == d1{4.0, 2.0, 0.0});
   REQUIRE(res[2] == d1{6.0, 0.0, 2.0});
+
+  d2 u{d1{2.0, 1.0, 0.0}, d2::inner_one, d2::inner_zero};
+  d2 v{d1{3.0, 0.0, 1.0}, d2::inner_zero, d2::inner_one};
+  res = f(u, v);
+
+  d2 a{d1::for_deriv(2.0, 1), d2::inner_one, d2::inner_zero};
+  d2 b{d1::for_deriv(3.0, 2), d2::inner_zero, d2::inner_one};
+  res = f(a, b);
+  REQUIRE(res[0] == d1{13.0, 4.0, 6.0});
+  REQUIRE(res[1] == d1{4.0, 2.0, 0.0});
+  REQUIRE(res[2] == d1{6.0, 0.0, 2.0});
+
+  d2 c = d2::for_deriv(d1::for_deriv(2.0, 1), 1);
+  d2 d = d2::for_deriv(d1::for_deriv(3.0, 2), 2);
+  res = f(c, d);
+  std::cout << c << '\n';
+  std::cout << d << '\n';
+  REQUIRE(res[0] == d1{13.0, 4.0, 6.0});
+  REQUIRE(res[1] == d1{4.0, 2.0, 0.0});
+  REQUIRE(res[2] == d1{6.0, 0.0, 2.0});
 }
 
+#if 0
+// Below is the start of a sketch of what we want the interface
+// for calculating mixed 2nd derivatives to be.
+//
+TEST_CASE("jacboian") {
+  double x[2] = {2.0, 3.0};
+  auto res =  jac(f, 2, x); // calculate mixed 2nd derivatives of f at x
+}
+#endif
